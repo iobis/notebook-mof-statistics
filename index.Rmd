@@ -1,0 +1,100 @@
+---
+title: MeasurementOrFact statistics
+author: Pieter Provoost
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+This is an overview of all OBIS datasets with (Extended)MeasurentOrFact records.
+
+The **columns marked in green or blue** indicate the fraction of records that have a value for measurementType, measurementValue, measurementUnit, measurementTypeID, measurementValueID, and measurementUnitID.
+
+The **last three columns** contain estimates of the fraction of missing values:
+
+- **Missing measurementTypeID**: this is the number of records without a measurementTypeID relative to the total number of records, as every record is expected to have a measurementTypeID.
+- **Missing measurementValueID**: this is the number of records without a measurementValueID relative to the number of records with a non numeric measurementValue. 
+- **Missing measurementUnitID**: this is the number of records without a measurementUnitID relative to the number of records with a measurementUnit.
+
+```{css, echo=FALSE}
+p {
+  margin: 10px 0px;
+}
+h3 {
+  margin: 20px 0px;
+}
+```
+
+```{r echo = FALSE, warning = FALSE, message = FALSE, results = 'asis'}
+library(RPostgreSQL)
+library(readr)
+library(dplyr)
+library(formattable)
+library(htmltools)
+library(stringr)
+
+if (!file.exists("stats.dat")) {
+  readRenviron("env.txt")
+  query <- read_file("query.sql")
+  drv <- dbDriver("PostgreSQL")
+  con <- dbConnect(drv, dbname = Sys.getenv("OBIS_DB"), host = Sys.getenv("OBIS_HOST"), port = Sys.getenv("OBIS_PORT"), user = Sys.getenv("OBIS_USER"), password = Sys.getenv("OBIS_PASSWORD"))
+  res <- dbSendQuery(con, query)
+  stats <- fetch(res, n = -1)
+  dbDisconnect(con)
+  dbUnloadDriver(drv)
+  save(stats, file = "stats.dat")
+} else {
+  load("stats.dat")
+}
+
+stats <- stats %>%
+  mutate(
+    typeid_missing = ifelse(count > 0, round(typeid_missing / count, 2), 0),
+    valueid_missing = ifelse(valueid_required > 0, round(valueid_missing / valueid_required, 2), 0),
+    unitid_missing = ifelse(unit > 0, round(unitid_missing / unit, 2), 0)
+  ) %>%
+  mutate(
+    type = round(type / count, 2),
+    typeid = round(typeid / count, 2),
+    value = round(value / count, 2),
+    valueid = round(valueid / count, 2),
+    unit = round(unit / count, 2),
+    unitid = round(unitid / count, 2)
+  ) %>%
+  mutate(
+    title = paste0("<a href=\"https://obis.org/dataset/", dataset_id, "\" target=\"_blank\">", title, "</a>")
+  ) %>%
+  select(title, node, records = count, type, value, unit, typeid, valueid, unitid, typeid_missing, valueid_missing, unitid_missing)
+
+h3("Nodes")
+
+tags$ul(tagList(lapply(unique(stats$node), function(n) {
+  tags$li(a(n, href = paste0("#", str_replace(tolower(n), " ", "-"))))
+})))
+
+tagList(lapply(unique(stats$node), function(n) {
+  
+  subset <- which(stats$node == n)
+  
+  ft <- formattable(stats[subset,] %>% select(-node), list(
+    type = x ~ color_tile("white", "darkolivegreen3")(stats$type)[subset],
+    value = x ~ color_tile("white", "darkolivegreen3")(stats$value)[subset],
+    unit = x ~ color_tile("white", "darkolivegreen3")(stats$unit)[subset],
+    typeid = x ~ color_tile("white", "lightblue3")(stats$typeid)[subset],
+    valueid = x ~ color_tile("white", "lightblue3")(stats$valueid)[subset],
+    unitid = x ~ color_tile("white", "lightblue3")(stats$unitid)[subset],
+    typeid_missing = x ~ color_tile("white", "orange")(stats$typeid_missing)[subset],
+    valueid_missing = x ~ color_tile("white", "orange")(stats$valueid_missing)[subset],
+    unitid_missing = x ~ color_tile("white", "orange")(stats$unitid_missing)[subset]
+  ))
+  rownames(ft) <- c()
+  
+  tagList(
+    a(name = str_replace(tolower(n), " ", "-")),
+    h3(n),
+    as.htmlwidget(ft)
+  )
+  
+}))
+```
+
