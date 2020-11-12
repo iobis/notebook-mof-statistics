@@ -9,6 +9,14 @@ knit: (function(inputFile, encoding) {
 ---
 
 ```{r echo = FALSE, warning = FALSE, message = FALSE, results = 'asis'}
+library(DBI)
+library(readr)
+library(dplyr)
+library(formattable)
+library(htmltools)
+library(stringr)
+library(rmarkdown)
+
 p(format(Sys.time(), "%B %d, %Y %H:%M"))
 force_refresh <- TRUE
 ```
@@ -33,13 +41,6 @@ h3 {
 ```
 
 ```{r echo = FALSE, warning = FALSE, message = FALSE, results = 'asis'}
-library(DBI)
-library(readr)
-library(dplyr)
-library(formattable)
-library(htmltools)
-library(stringr)
-
 if (force_refresh == TRUE | !file.exists("stats.dat")) {
   readRenviron("env.txt")
   query <- read_file("query.sql")
