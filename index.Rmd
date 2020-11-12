@@ -46,7 +46,8 @@ if (force_refresh == TRUE | !file.exists("stats.dat")) {
   query <- read_file("query.sql")
   con <- dbConnect(RPostgres::Postgres(), dbname = Sys.getenv("OBIS_DB"), host = Sys.getenv("OBIS_HOST"), port = Sys.getenv("OBIS_PORT"), user = Sys.getenv("OBIS_USER"), password = Sys.getenv("OBIS_PASSWORD"), bigint = "integer")
   res <- dbSendQuery(con, query)
-  stats <- fetch(res, n = -1)
+  stats <- dbFetch(res)
+  dbClearResult(res)
   dbDisconnect(con)
   save(stats, file = "stats.dat")
 } else {
