@@ -4,6 +4,8 @@ author: Pieter Provoost
 output: html_document
 editor_options: 
   chunk_output_type: console
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(inputFile, encoding = encoding, output_dir = "web") })    
 ---
 
 This is an overview of all OBIS datasets with (Extended)MeasurentOrFact records.
