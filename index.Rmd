@@ -33,7 +33,7 @@ h3 {
 ```
 
 ```{r echo = FALSE, warning = FALSE, message = FALSE, results = 'asis'}
-library(RPostgreSQL)
+library(DBI)
 library(readr)
 library(dplyr)
 library(formattable)
