@@ -8,6 +8,10 @@ knit: (function(inputFile, encoding) {
   rmarkdown::render(inputFile, encoding = encoding, output_dir = "web") })    
 ---
 
+```{r echo = FALSE, warning = FALSE, message = FALSE, results = 'asis'}
+p(format(Sys.time(), "%B %d, %Y %H:%M"))
+```
+
 This is an overview of all OBIS datasets with (Extended)MeasurentOrFact records.
 
 The **columns marked in green or blue** indicate the fraction of records that have a value for measurementType, measurementValue, measurementUnit, measurementTypeID, measurementValueID, and measurementUnitID.
