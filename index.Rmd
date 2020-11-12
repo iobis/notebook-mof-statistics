@@ -10,6 +10,7 @@ knit: (function(inputFile, encoding) {
 
 ```{r echo = FALSE, warning = FALSE, message = FALSE, results = 'asis'}
 p(format(Sys.time(), "%B %d, %Y %H:%M"))
+force_refresh <- TRUE
 ```
 
 This is an overview of all OBIS datasets with (Extended)MeasurentOrFact records.
@@ -39,15 +40,13 @@ library(formattable)
 library(htmltools)
 library(stringr)
 
-if (!file.exists("stats.dat")) {
+if (force_refresh == TRUE | !file.exists("stats.dat")) {
   readRenviron("env.txt")
   query <- read_file("query.sql")
-  drv <- dbDriver("PostgreSQL")
-  con <- dbConnect(drv, dbname = Sys.getenv("OBIS_DB"), host = Sys.getenv("OBIS_HOST"), port = Sys.getenv("OBIS_PORT"), user = Sys.getenv("OBIS_USER"), password = Sys.getenv("OBIS_PASSWORD"))
+  con <- dbConnect(RPostgres::Postgres(), dbname = Sys.getenv("OBIS_DB"), host = Sys.getenv("OBIS_HOST"), port = Sys.getenv("OBIS_PORT"), user = Sys.getenv("OBIS_USER"), password = Sys.getenv("OBIS_PASSWORD"), bigint = "integer")
   res <- dbSendQuery(con, query)
   stats <- fetch(res, n = -1)
   dbDisconnect(con)
-  dbUnloadDriver(drv)
   save(stats, file = "stats.dat")
 } else {
   load("stats.dat")
